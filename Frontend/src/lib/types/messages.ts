@@ -6,22 +6,9 @@ export interface Message {
 	content: string;
 	isRead: boolean;
 	createdAt: Date;
-	// Computed fields
-	sender?: {
-		id: string;
-		name: string;
-		avatar?: string;
-	};
-	receiver?: {
-		id: string;
-		name: string;
-		avatar?: string;
-	};
-	timeAgo?: string;
 }
 
 export interface Conversation {
-	id: string;
 	tradeId: string;
 	otherUser: {
 		id: string;
@@ -29,19 +16,10 @@ export interface Conversation {
 		avatar?: string;
 		online?: boolean;
 	};
-	lastMessage?: {
-		content: string;
-		senderId: string;
-		createdAt: Date;
-		timeAgo?: string;
-	};
-	unreadCount: number;
-	tradeItem: {
-		id: string;
-		title: string;
-		image?: string;
-	};
-	status: 'active' | 'pending' | 'completed';
+	lastMessage?: string;
+	lastMessageTime?: string;
+	tradeItem?: { title?: string };
+	unreadCount?: number;
 }
 
 export interface CreateMessageData {

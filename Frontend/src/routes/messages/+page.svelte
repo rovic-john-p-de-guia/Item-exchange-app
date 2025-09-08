@@ -6,27 +6,25 @@
 	import type { User } from '$lib/types/auth';
 	import type { Conversation, Message } from '$lib/types/messages';
 
-	let user: User | null = null;
-	let isAuthenticated = false;
-	let isLoading = true;
-	let selectedConversation: Conversation | null = null;
-	let searchQuery = '';
-	let conversations: Conversation[] = [];
-	let messages: Message[] = [];
-	let error: string | null = null;
+	let user: User | null = $state(null);
+	let isAuthenticated = $state(false);
+	let isLoading = $state(true);
+	let selectedConversation: Conversation | null = $state(null);
+	let searchQuery = $state('');
+	let conversations: Conversation[] = $state([]);
+	let messages: Message[] = $state([]);
+	let error: string | null = $state(null);
 
 	let filteredConversations = $derived(conversations.filter(conv => 
 		conv.otherUser.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-		conv.tradeItem.title.toLowerCase().includes(searchQuery.toLowerCase())
+		(conv.tradeItem?.title || '').toLowerCase().includes(searchQuery.toLowerCase())
 	));
 
 	async function loadConversations() {
 		if (!user) return;
-		
 		try {
 			isLoading = true;
 			error = null;
-			
 			const convs = await messageService.getConversations(user.id);
 			conversations = convs;
 		} catch (err) {
@@ -39,7 +37,6 @@
 
 	async function loadMessages(tradeId: string) {
 		if (!user) return;
-		
 		try {
 			const msgs = await messageService.getMessages({ tradeId });
 			messages = msgs;
@@ -53,12 +50,9 @@
 			user = authState.user;
 			isAuthenticated = authState.isAuthenticated;
 			isLoading = authState.isLoading;
-			
-			// Redirect if not authenticated
 			if (!authState.isLoading && !authState.isAuthenticated) {
 				goto('/sign-in-up');
 			} else if (authState.isAuthenticated && authState.user) {
-				// Load conversations when user is authenticated
 				await loadConversations();
 			}
 		});
@@ -72,20 +66,15 @@
 
 	async function sendMessage() {
 		if (!selectedConversation || !user) return;
-		
 		const messageInput = document.querySelector('#messageInput') as HTMLInputElement;
 		const content = messageInput?.value?.trim();
-		
 		if (!content) return;
-		
 		try {
 			await messageService.createMessage(user.id, {
 				tradeId: selectedConversation.tradeId,
 				receiverId: selectedConversation.otherUser.id,
 				content
 			});
-			
-			// Clear input and reload messages
 			messageInput.value = '';
 			await loadMessages(selectedConversation.tradeId);
 		} catch (error) {
@@ -95,11 +84,7 @@
 </script>
 
 <div class="p-4 lg:p-6">
-	<!-- Header -->
-	<div class="mb-6 lg:mb-8">
-		<h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Messages</h1>
-		<p class="text-gray-600">Communicate with other traders</p>
-	</div>
+	<!-- Header removed per request -->
 
 	{#if isLoading}
 		<div class="flex flex-col items-center justify-center py-16">
@@ -134,27 +119,27 @@
 							<button
 								on:click={() => selectConversation(conversation)}
 								class="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100 transition-colors group
-									{selectedConversation?.id === conversation.id ? 'bg-red-50 border-red-200' : ''}"
+									{selectedConversation?.tradeId === conversation.tradeId ? 'bg-red-50 border-red-200' : ''}"
 							>
 								<div class="flex items-center space-x-3">
 									<div class="relative">
 										<img 
-											src={conversation.user.avatar} 
-											alt={conversation.user.name}
+											src={conversation.otherUser.avatar} 
+											alt={conversation.otherUser.name}
 											class="w-12 h-12 rounded-full object-cover"
 										/>
-										{#if conversation.user.online}
+										{#if conversation.otherUser.online}
 											<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
 										{/if}
 									</div>
 									<div class="flex-1 min-w-0">
 										<div class="flex items-center justify-between mb-1">
-											<h3 class="font-medium text-gray-900 truncate">{conversation.user.name}</h3>
+											<h3 class="font-medium text-gray-900 truncate">{conversation.otherUser.name}</h3>
 											<span class="text-xs text-gray-500">{conversation.lastMessageTime}</span>
 										</div>
 										<p class="text-sm text-gray-600 truncate mb-1">{conversation.lastMessage}</p>
 										<div class="flex items-center justify-between">
-											<span class="text-xs text-gray-500">{conversation.tradeItem}</span>
+											<span class="text-xs text-gray-500">{conversation.tradeItem?.title}</span>
 											{#if conversation.unreadCount > 0}
 												<span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
 													{conversation.unreadCount}
@@ -246,15 +231,6 @@
 			</div>
 		</div>
 
-		<!-- Empty State -->
-		{#if filteredConversations.length === 0}
-			<div class="text-center py-12">
-				<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-				</svg>
-				<h3 class="mt-2 text-sm font-medium text-gray-900">No conversations yet</h3>
-				<p class="mt-1 text-sm text-gray-500">Start trading to begin conversations with other users</p>
-			</div>
-		{/if}
+		<!-- Empty State removed per request -->
 	{/if}
 </div>

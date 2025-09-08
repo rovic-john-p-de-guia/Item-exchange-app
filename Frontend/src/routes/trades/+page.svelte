@@ -108,11 +108,7 @@
 </script>
 
 <div class="p-4 lg:p-6">
-	<!-- Header -->
-	<div class="mb-6 lg:mb-8">
-		<h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Trades</h1>
-		<p class="text-gray-600">Manage your trade offers and negotiations</p>
-	</div>
+	<!-- Header removed per request -->
 
 	{#if isLoading}
 		<div class="flex flex-col items-center justify-center py-16">

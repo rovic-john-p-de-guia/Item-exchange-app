@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { Message, Conversation, CreateMessageData, MessageFilters } from '../types/messages';
-import { api } from '../config/api';
+import { api, API_BASE_URL } from '../config/api';
 
 class MessageService {
 	// Messages CRUD operations
@@ -32,40 +32,27 @@ class MessageService {
 		}
 	}
 
-	async getConversations(userId: string): Promise<Conversation[]> { return []; }
-
-	async updateMessage(id: string, updates: Partial<Message>): Promise<Message | null> {
+	async getConversations(userId: string): Promise<Conversation[]> {
 		try {
-			// For now, we'll need to implement this in the database service
-			// For now, just return null
-			return null;
+			const res = await fetch(`${API_BASE_URL}/messages/conversations?user_id=${encodeURIComponent(userId)}`);
+			if (!res.ok) return [];
+			const data = await res.json();
+			return data.map((c: any) => ({
+				tradeId: c.tradeId,
+				otherUser: { id: c.otherUser.id, name: c.otherUser.name },
+				tradeItem: { title: c.tradeItem?.title || '' },
+				lastMessage: c.lastMessage || '',
+				lastMessageTime: c.lastMessageTime || ''
+			}));
 		} catch (error) {
-			console.error('Error updating message:', error);
-			return null;
+			console.error('Error getting conversations:', error);
+			return [];
 		}
 	}
 
-	async deleteMessage(id: string): Promise<boolean> {
-		try {
-			// For now, we'll need to implement this in the database service
-			// For now, just return true
-			return true;
-		} catch (error) {
-			console.error('Error deleting message:', error);
-			return false;
-		}
-	}
-
-	async markAsRead(messageId: string): Promise<boolean> {
-		try {
-			// For now, we'll need to implement this in the database service
-			// For now, just return true
-			return true;
-		} catch (error) {
-			console.error('Error marking message as read:', error);
-			return false;
-		}
-	}
+	async updateMessage(id: string, updates: Partial<Message>): Promise<Message | null> { return null; }
+	async deleteMessage(id: string): Promise<boolean> { return true; }
+	async markAsRead(messageId: string): Promise<boolean> { return true; }
 
 	private mapApiMessageToMessage(m: any): Message {
 		return {

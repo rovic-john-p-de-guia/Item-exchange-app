@@ -82,28 +82,10 @@
 	}
 </script>
 
-<div class="p-4 lg:p-6">
-	<!-- Header -->
-	<div class="mb-6 lg:mb-8">
-		<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-			<div>
-				<h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Discover Items</h1>
-				<p class="text-gray-600">Find amazing items to trade in your community</p>
-			</div>
-			<!-- Test user button for development -->
-			{#if !isAuthenticated}
-				<div class="mt-4 sm:mt-0">
-					<button 
-						on:click={createTestUser}
-						class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-					>
-						Create Test User
-					</button>
-				</div>
-			{/if}
-		</div>
-	</div>
+<!-- Header -->
+<!-- Removed header per request -->
 
+<div class="p-4 lg:p-6">
 	{#if !authInitialized}
 		<div class="text-center py-12">
 			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>

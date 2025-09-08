@@ -2,114 +2,71 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/authStore';
+	import { itemService } from '$lib/services/itemService';
 	import type { User } from '$lib/types/auth';
 
-	let user: User | null = null;
-	let isAuthenticated = false;
-	let isLoading = true;
-	let selectedTab = 'active';
+	let user: User | null = $state(null);
+	let isAuthenticated = $state(false);
+	let isLoading = $state(true);
+	let selectedTab = $state('active');
 
 	const tabs = [
-		{ id: 'active', label: 'Active Items', count: 3 },
-		{ id: 'pending', label: 'Pending Trades', count: 1 },
-		{ id: 'completed', label: 'Completed', count: 5 },
-		{ id: 'drafts', label: 'Drafts', count: 2 }
+		{ id: 'active', label: 'Active Items', count: 0 },
+		{ id: 'pending', label: 'Pending Trades', count: 0 },
+		{ id: 'completed', label: 'Completed', count: 0 },
+		{ id: 'drafts', label: 'Drafts', count: 0 }
 	];
 
-	let myItems = [
-		{
-			id: '1',
-			title: 'MacBook Pro 2020',
-			description: '13-inch MacBook Pro in excellent condition, barely used',
-			category: 'Electronics',
-			condition: 'Excellent',
-			image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400',
-			status: 'active',
-			views: 24,
-			offers: 3,
-			posted: '2 days ago'
-		},
-		{
-			id: '2',
-			title: 'Guitar Lessons',
-			description: 'Professional guitar lessons for all skill levels',
-			category: 'Services',
-			condition: 'New',
-			image: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=400',
-			status: 'active',
-			views: 18,
-			offers: 1,
-			posted: '1 week ago'
-		},
-		{
-			id: '3',
-			title: 'Vintage Camera',
-			description: 'Canon AE-1 film camera with lens',
-			category: 'Electronics',
-			condition: 'Good',
-			image: 'https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=400',
-			status: 'pending',
-			views: 45,
-			offers: 2,
-			posted: '3 days ago'
-		}
-	];
-
+	type MyItem = { id: string; title: string; description: string; category: string; condition: string; image: string; status: string; views: number; offers: number; posted: string };
+	let myItems: MyItem[] = $state([]);
 	let filteredItems = $derived(myItems.filter(item => {
-		if (selectedTab === 'active') return item.status === 'active';
+		if (selectedTab === 'active') return item.status === 'available';
 		if (selectedTab === 'pending') return item.status === 'pending';
 		if (selectedTab === 'completed') return item.status === 'completed';
 		if (selectedTab === 'drafts') return item.status === 'draft';
 		return true;
 	}));
 
+	async function loadMyItems() {
+		if (!user) return;
+		isLoading = true;
+		const items = await itemService.getItems({ userId: user.id });
+		myItems = items.map(i => ({
+			id: i.id,
+			title: i.title,
+			description: i.description,
+			category: i.category,
+			condition: i.condition,
+			image: i.images[0] || '',
+			status: i.status,
+			views: i.views || 0,
+			offers: 0,
+			posted: i.createdAt?.toLocaleDateString() || ''
+		}));
+		isLoading = false;
+	}
+
 	onMount(() => {
 		const unsubscribe = authStore.subscribe((authState) => {
 			user = authState.user;
 			isAuthenticated = authState.isAuthenticated;
 			isLoading = authState.isLoading;
-			
-			// Redirect if not authenticated
 			if (!authState.isLoading && !authState.isAuthenticated) {
 				goto('/sign-in-up');
+			} else if (authState.isAuthenticated && authState.user) {
+				loadMyItems();
 			}
 		});
 		return unsubscribe;
 	});
 
-	function handleEditItem(item: any) {
-		console.log('Edit item:', item);
-		// TODO: Navigate to edit page
-	}
-
-	function handleDeleteItem(item: any) {
-		console.log('Delete item:', item);
-		// TODO: Show confirmation and delete
-	}
-
-	function handleViewOffers(item: any) {
-		console.log('View offers for:', item);
-		// TODO: Navigate to offers page
-	}
+	function handleEditItem(item: any) {}
+	function handleDeleteItem(item: any) {}
+	function handleViewOffers(item: any) {}
 </script>
 
 <div class="p-4 lg:p-6">
-	<!-- Header -->
-	<div class="mb-6 lg:mb-8">
-		<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-			<div>
-				<h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">My Items</h1>
-				<p class="text-gray-600">Manage your posted items and track their status</p>
-			</div>
-			
-			<!-- Add Item Button -->
-			<div class="mt-4 sm:mt-0">
-				<button class="bg-red-600 text-white px-6 py-2 rounded-xl hover:bg-red-700 transition-all duration-200 font-semibold shadow-sm hover:shadow-md">
-					Add New Item
-				</button>
-			</div>
-		</div>
-	</div>
+	<!-- Header removed per request -->
 
 	{#if isLoading}
 		<div class="flex flex-col items-center justify-center py-16">
@@ -119,8 +76,8 @@
 	{:else if isAuthenticated}
 		<!-- Tabs -->
 		<div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 lg:mb-8">
-			<div class="border-b border-gray-200">
-				<nav class="-mb-px flex overflow-x-auto px-4 lg:px-6">
+			<div class="px-4 lg:px-6 py-2 flex items-center justify-between">
+				<nav class="-mb-px flex overflow-x-auto">
 					{#each tabs as tab}
 						<button
 							on:click={() => selectedTab = tab.id}
@@ -136,7 +93,11 @@
 						</button>
 					{/each}
 				</nav>
+				<button class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium ml-4 whitespace-nowrap">
+					+ Post New Item
+				</button>
 			</div>
+			<div class="border-b border-gray-200"></div>
 		</div>
 
 		<!-- Action Bar -->
@@ -144,9 +105,7 @@
 			<div class="text-sm text-gray-600">
 				{filteredItems.length} {selectedTab} item{filteredItems.length !== 1 ? 's' : ''}
 			</div>
-			<button class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium">
-				+ Post New Item
-			</button>
+			<!-- Button moved into tabs container -->
 		</div>
 
 		<!-- Items Grid -->
