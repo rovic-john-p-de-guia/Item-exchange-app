@@ -45,7 +45,7 @@
 		}
 	}
 
-	onMount(async () => {
+	onMount(() => {
 		const unsubscribe = authStore.subscribe(async (authState) => {
 			user = authState.user;
 			isAuthenticated = authState.isAuthenticated;
@@ -56,7 +56,7 @@
 				await loadConversations();
 			}
 		});
-		return unsubscribe;
+		return () => unsubscribe();
 	});
 
 	async function selectConversation(conversation: Conversation) {
@@ -117,7 +117,7 @@
 					<div class="flex-1 overflow-y-auto">
 						{#each filteredConversations as conversation}
 							<button
-								on:click={() => selectConversation(conversation)}
+								onclick={() => selectConversation(conversation)}
 								class="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100 transition-colors group
 									{selectedConversation?.tradeId === conversation.tradeId ? 'bg-red-50 border-red-200' : ''}"
 							>
@@ -140,7 +140,7 @@
 										<p class="text-sm text-gray-600 truncate mb-1">{conversation.lastMessage}</p>
 										<div class="flex items-center justify-between">
 											<span class="text-xs text-gray-500">{conversation.tradeItem?.title}</span>
-											{#if conversation.unreadCount > 0}
+											{#if (conversation.unreadCount || 0) > 0}
 												<span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
 													{conversation.unreadCount}
 												</span>
@@ -161,18 +161,18 @@
 							<div class="flex items-center space-x-3">
 								<div class="relative">
 									<img 
-										src={selectedConversation.user.avatar} 
-										alt={selectedConversation.user.name}
+										src={selectedConversation.otherUser.avatar} 
+										alt={selectedConversation.otherUser.name}
 										class="w-10 h-10 rounded-full object-cover"
 									/>
-									{#if selectedConversation.user.online}
+									{#if selectedConversation.otherUser.online}
 										<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
 									{/if}
 								</div>
 								<div class="flex-1 min-w-0">
-									<h3 class="font-semibold text-gray-900 truncate">{selectedConversation.user.name}</h3>
+									<h3 class="font-semibold text-gray-900 truncate">{selectedConversation.otherUser.name}</h3>
 									<p class="text-sm text-gray-500 truncate">
-										{selectedConversation.user.online ? 'Online' : 'Offline'} • {selectedConversation.tradeItem}
+										{selectedConversation.otherUser.online ? 'Online' : 'Offline'} • {selectedConversation.tradeItem?.title}
 									</p>
 								</div>
 							</div>
@@ -181,14 +181,14 @@
 						<!-- Messages -->
 						<div class="flex-1 overflow-y-auto p-4 space-y-4">
 							{#each messages as message}
-								<div class="flex {message.isOwn ? 'justify-end' : 'justify-start'}">
+								<div class={"flex " + (message.senderId === user?.id ? 'justify-end' : 'justify-start')}>
 									<div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg
-										{message.isOwn 
+										{(message.senderId === user?.id) 
 											? 'bg-red-600 text-white' 
 											: 'bg-gray-200 text-gray-900'}"
 									>
 										<p class="text-sm">{message.content}</p>
-										<p class="text-xs mt-1 opacity-70">{message.timestamp}</p>
+										<p class="text-xs mt-1 opacity-70">{new Date(message.createdAt).toLocaleString()}</p>
 									</div>
 								</div>
 							{/each}
@@ -202,10 +202,10 @@
 									type="text"
 									placeholder="Type a message..."
 									class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-									on:keydown={(e) => e.key === 'Enter' && sendMessage()}
+									onkeydown={(e) => e.key === 'Enter' && sendMessage()}
 								/>
 								<button
-									on:click={sendMessage}
+									onclick={sendMessage}
 									class="bg-red-600 text-white px-4 py-3 rounded-xl hover:bg-red-700 transition-colors shadow-sm hover:shadow-md"
 									aria-label="Send message"
 								>
